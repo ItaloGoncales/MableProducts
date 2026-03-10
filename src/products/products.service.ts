@@ -89,16 +89,27 @@ export class ProductsService {
   async addVariants(productId: number, createVariantDtos: CreateVariantDto[]): Promise<Product> {
     // Use transaction to ensure data consistency
     return await this.dataSource.transaction(async (manager) => {
-      // Check if product exists (with lock to prevent concurrent modifications)
-      const product = await manager.findOne(Product, {
-        where: { id: productId },
-        relations: ['options', 'variants'],
-        lock: { mode: 'pessimistic_write' }, // Lock row until transaction completes
-      })
+      // Check if product exists with pessimistic lock (without relations to avoid LEFT JOIN issue)
+      const product = await manager
+        .createQueryBuilder(Product, 'product')
+        .where('product.id = :id', { id: productId })
+        .setLock('pessimistic_write')
+        .getOne()
 
       if (!product) {
         throw new NotFoundException(`Product with ID ${productId} not found`)
       }
+
+      // Load relations separately (after acquiring lock)
+      const existingOptions = await manager.find(ProductOption, {
+        where: { productId },
+      })
+      const existingVariants = await manager.find(ProductVariant, {
+        where: { productId },
+      })
+
+      product.options = existingOptions
+      product.variants = existingVariants
 
       // Validate and create variants
       const newVariants: ProductVariant[] = []
@@ -144,11 +155,20 @@ export class ProductsService {
       // Auto-manage options based on all variants (within transaction)
       await this.autoManageOptionsInTransaction(manager, productId)
 
-      // Return updated product with relations
-      return await manager.findOne(Product, {
+      // Return updated product with relations (load separately to avoid lock issues)
+      const updatedProduct = await manager.findOne(Product, {
         where: { id: productId },
-        relations: ['options', 'variants'],
       })
+
+      // Load relations separately
+      updatedProduct.options = await manager.find(ProductOption, {
+        where: { productId },
+      })
+      updatedProduct.variants = await manager.find(ProductVariant, {
+        where: { productId },
+      })
+
+      return updatedProduct
     })
   }
 
