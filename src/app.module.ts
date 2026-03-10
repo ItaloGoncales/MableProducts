@@ -3,8 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
 import { APP_GUARD } from '@nestjs/core'
 import { AppController } from './app.controller'
-import { AppService } from './app.service'
 import { AuthGuard } from './shared/guards/auth.guard'
+import { ProductsModule } from './products/products.module'
 
 // Config imports
 import appConfig from './shared/config/app.config'
@@ -26,10 +26,10 @@ const env = process.env.NODE_ENV || 'development'
       useFactory: (configService: ConfigService) => configService.get('database'),
       inject: [ConfigService],
     }),
+    ProductsModule,
   ],
   controllers: [AppController],
   providers: [
-    AppService,
     {
       provide: APP_GUARD,
       useClass: AuthGuard,
