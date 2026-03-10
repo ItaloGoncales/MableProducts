@@ -1,5 +1,8 @@
 # Mable Products API
 
+[![Deploy to Vercel](https://github.com/ItaloGoncales/MableProducts/actions/workflows/deploy.yml/badge.svg)](https://github.com/ItaloGoncales/MableProducts/actions/workflows/deploy.yml)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?logo=vercel&logoColor=white)](https://mable-products-f2zp8oyl3-italogoncales-projects.vercel.app)
+
 A production-ready NestJS API for managing products with multidimensional variants (e.g., Flavor × Size combinations).
 
 ## Description
