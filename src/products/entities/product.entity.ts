@@ -17,10 +17,10 @@ export class Product implements IProduct {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column({ length: 255 })
+  @Column('varchar', { length: 255 })
   name: string
 
-  @Column({ unique: true, length: 255 })
+  @Column('varchar', { unique: true, length: 255 })
   slug: string
 
   @Column({
@@ -30,16 +30,16 @@ export class Product implements IProduct {
   })
   status: ProductStatus
 
-  @Column({ nullable: true })
+  @Column('int', { nullable: true })
   sellerId?: number
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ type: 'timestamp' })
   deletedAt?: Date
 
   // Relations (not in interface - ORM-specific)

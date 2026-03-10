@@ -17,13 +17,13 @@ export class ProductVariant implements IProductVariant {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column()
+  @Column('int')
   productId: number
 
-  @Column({ unique: true, length: 100 })
+  @Column('varchar', { unique: true, length: 100 })
   sku: string
 
-  @Column({ length: 500 })
+  @Column('varchar', { length: 500 })
   name: string
 
   @Column({ type: 'text', nullable: true })
@@ -35,19 +35,19 @@ export class ProductVariant implements IProductVariant {
   @Column({ type: 'jsonb', default: {} })
   options: Record<string, string>
 
-  @Column({ nullable: true })
+  @Column('int', { nullable: true })
   eachCount?: number
 
   @Column({ type: 'decimal', precision: 10, scale: 2, nullable: true })
   eachSize?: number
 
-  @Column({ length: 20, nullable: true })
+  @Column('varchar', { length: 20, nullable: true })
   eachSizeUnit?: string
 
-  @Column({ length: 50, nullable: true })
+  @Column('varchar', { length: 50, nullable: true })
   eachName?: string
 
-  @Column({ length: 50, nullable: true })
+  @Column('varchar', { length: 50, nullable: true })
   eachNamePlural?: string
 
   @Column({
@@ -57,16 +57,16 @@ export class ProductVariant implements IProductVariant {
   })
   availability: Availability
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   position: number
 
-  @CreateDateColumn()
+  @CreateDateColumn({ type: 'timestamp' })
   createdAt: Date
 
-  @UpdateDateColumn()
+  @UpdateDateColumn({ type: 'timestamp' })
   updatedAt: Date
 
-  @DeleteDateColumn()
+  @DeleteDateColumn({ type: 'timestamp' })
   deletedAt?: Date
 
   // Relations (not in interface - ORM-specific)

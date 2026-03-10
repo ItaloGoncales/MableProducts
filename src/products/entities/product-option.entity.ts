@@ -7,16 +7,16 @@ export class ProductOption implements IProductOption {
   @PrimaryGeneratedColumn()
   id: number
 
-  @Column()
+  @Column('int')
   productId: number
 
-  @Column({ length: 100 })
+  @Column('varchar', { length: 100 })
   name: string
 
   @Column('text', { array: true })
   values: string[]
 
-  @Column({ default: 0 })
+  @Column('int', { default: 0 })
   position: number
 
   // Relations (not in interface - ORM-specific)

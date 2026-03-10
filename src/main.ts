@@ -1,10 +1,17 @@
+import 'reflect-metadata'
 import { Logger, ValidationPipe } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { NestFactory } from '@nestjs/core'
 import { AppModule } from './app.module'
 import { setupSwagger } from './shared/config/swagger.config'
 
+let cachedApp: any
+
 async function bootstrap() {
+  if (cachedApp) {
+    return cachedApp
+  }
+
   const app = await NestFactory.create(AppModule)
 
   const configService = app.get(ConfigService)
@@ -41,6 +48,59 @@ async function bootstrap() {
 
   const log = new Logger('Bootstrap')
 
+  // Don't call listen() - just init for serverless
+  await app.init()
+  cachedApp = app
+  
+  log.log({
+    message: 'NestJS initialized',
+    environment: nodeEnv,
+  })
+
+  return app
+}
+
+// For Vercel serverless
+export default async (req: any, res: any) => {
+  const app = await bootstrap()
+  const expressApp = app.getHttpAdapter().getInstance()
+  return expressApp(req, res)
+}
+
+// For local execution with traditional server
+async function startServer() {
+  const app = await NestFactory.create(AppModule)
+  
+  const configService = app.get(ConfigService)
+  const nodeEnv = configService.get<string>('NODE_ENV')
+  const port = configService.get<number>('PORT') || 3000
+
+  app.enableCors({
+    origin: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true,
+  })
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+      transformOptions: {
+        enableImplicitConversion: true,
+      },
+    }),
+  )
+
+  app.enableShutdownHooks()
+
+  if (nodeEnv !== 'production') {
+    setupSwagger(app)
+  }
+
+  const log = new Logger('Bootstrap')
+
   await app.listen(port, () =>
     log.log({
       message: 'Service listening',
@@ -52,4 +112,8 @@ async function bootstrap() {
     }),
   )
 }
-bootstrap()
+
+// Only start server if running directly (not via Vercel)
+if (require.main === module) {
+  startServer()
+}
