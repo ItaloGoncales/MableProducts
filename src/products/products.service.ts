@@ -114,6 +114,21 @@ export class ProductsService {
       // Validate and create variants
       const newVariants: ProductVariant[] = []
 
+      // Check for duplicate SKUs within the batch
+      const skuCounts = new Map<string, number>()
+      createVariantDtos.forEach((dto) => {
+        skuCounts.set(dto.sku, (skuCounts.get(dto.sku) || 0) + 1)
+      })
+      const duplicatesInBatch = Array.from(skuCounts.entries())
+        .filter(([_, count]) => count > 1)
+        .map(([sku]) => sku)
+
+      if (duplicatesInBatch.length > 0) {
+        throw new BadRequestException(
+          `Duplicate SKUs found in request: ${duplicatesInBatch.join(', ')}. Each SKU must be unique.`,
+        )
+      }
+
       for (const dto of createVariantDtos) {
         // Check SKU uniqueness (within transaction)
         const existingSku = await manager.findOne(ProductVariant, {
