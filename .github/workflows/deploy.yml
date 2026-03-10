@@ -49,8 +49,7 @@ jobs:
           EOF
 
       - name: Run database migrations
-        run: |
-          NODE_ENV=production pnpm typeorm:run
+        run: pnpm typeorm:run:prod
         env:
           NODE_ENV: production
 

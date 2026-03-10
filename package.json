@@ -22,7 +22,8 @@
     "typeorm": "NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts",
     "typeorm:generate": "NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts migration:generate",
     "typeorm:run": "NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts migration:run",
-    "typeorm:revert": "NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts migration:revert"
+    "typeorm:revert": "NODE_ENV=development ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts migration:revert",
+    "typeorm:run:prod": "NODE_ENV=production ts-node -r tsconfig-paths/register ./node_modules/typeorm/cli.js -d src/database/data-source.ts migration:run"
   },
   "dependencies": {
     "@nestjs/common": "^10.0.0",
