@@ -1,99 +1,354 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Mable Products API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
-
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://coveralls.io/github/nestjs/nest?branch=master" target="_blank"><img src="https://coveralls.io/repos/github/nestjs/nest/badge.svg?branch=master#9" alt="Coverage" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+A production-ready NestJS API for managing products with multidimensional variants (e.g., Flavor × Size combinations).
 
 ## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+This API provides **Create** and **Read** operations for products with complex variant structures. It features automatic option management, transaction-based concurrency control, and comprehensive validation.
 
-## Project setup
+### Key Features
+
+- ✅ **CR Operations Only** (Create + Read, no Update/Delete)
+- ✅ **Separated Endpoints** (Create product → Add variants separately)
+- ✅ **Auto-Option Management** (Automatically extracts options from variants)
+- ✅ **Transaction Safety** (Pessimistic locking prevents race conditions)
+- ✅ **Soft Delete Support** (deletedAt timestamp)
+- ✅ **Pagination & Filters** (status, sellerId, page, limit)
+- ✅ **Bearer Token Auth** (Simple token from environment)
+- ✅ **Swagger Documentation** (Live API testing at `/api/docs`)
+- ✅ **PostgreSQL + Neon** (Cloud database with SSL)
+
+## Tech Stack
+
+- **Framework:** NestJS 10.x
+- **Database:** PostgreSQL (Neon cloud)
+- **ORM:** TypeORM 0.3.x
+- **Validation:** class-validator + class-transformer
+- **Documentation:** Swagger/OpenAPI
+- **Auth:** Bearer token
+- **Language:** TypeScript
+
+## Prerequisites
+
+- Node.js 18+ or 20+
+- pnpm (or npm/yarn)
+- PostgreSQL database (Neon account recommended)
+
+## Installation
 
 ```bash
-$ pnpm install
+# Install dependencies
+pnpm install
 ```
 
-## Compile and run the project
+## Environment Configuration
+
+Environment files are located in `src/shared/config/`:
 
 ```bash
-# development
-$ pnpm run start
+# Development (uses mable_products_test database)
+cp src/shared/config/.env.example src/shared/config/.env.development
 
-# watch mode
-$ pnpm run start:dev
+# Test
+cp src/shared/config/.env.example src/shared/config/.env.test
 
-# production mode
-$ pnpm run start:prod
+# Production
+cp src/shared/config/.env.example src/shared/config/.env.prod
 ```
 
-## Run tests
+### Environment Variables
 
 ```bash
-# unit tests
-$ pnpm run test
+# Application
+NODE_ENV=development
+PORT=3000
 
-# e2e tests
-$ pnpm run test:e2e
+# Database (Neon PostgreSQL)
+DB_HOST=your-neon-host.neon.tech
+DB_PORT=5432
+DB_USERNAME=your-username
+DB_PASSWORD=your-password
+DB_NAME=mable_products_test  # or mable_products for prod
+DB_SSL=true
 
-# test coverage
-$ pnpm run test:cov
+# Authentication
+AUTH_BEARER_TOKEN=your-secret-token
+```
+
+## Database Setup
+
+```bash
+# Run migrations
+pnpm typeorm:run
+
+# Generate new migration (after entity changes)
+pnpm typeorm:generate src/database/migrations/MigrationName
+
+# Revert last migration
+pnpm typeorm:revert
+```
+
+## Running the Application
+
+```bash
+# Development mode (with hot reload)
+pnpm start:dev
+
+# Production mode
+pnpm start:prod
+
+# Debug mode
+pnpm start:debug
+```
+
+The API will be available at:
+- **API:** http://localhost:3000
+- **Swagger UI:** http://localhost:3000/api/docs
+- **Health Check:** http://localhost:3000/health
+
+## API Endpoints
+
+### Health Check
+
+```http
+GET /health
+```
+
+**Public endpoint** (no authentication required)
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "timestamp": "2026-03-09T23:40:00.000Z",
+  "uptime": 123.456,
+  "environment": "development"
+}
+```
+
+### Products
+
+All product endpoints require Bearer token authentication.
+
+#### 1. Create Product
+
+```http
+POST /api/products
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+{
+  "name": "Chunk Nibbles",
+  "slug": "chunk-nibbles",  // optional, auto-generated if not provided
+  "status": "draft",        // optional: available, draft, archived
+  "sellerId": 2830          // optional
+}
+```
+
+**Response:** `201 Created`
+```json
+{
+  "id": 1,
+  "name": "Chunk Nibbles",
+  "slug": "chunk-nibbles",
+  "status": "draft",
+  "sellerId": 2830,
+  "createdAt": "2026-03-09T23:40:00.000Z",
+  "updatedAt": "2026-03-09T23:40:00.000Z",
+  "deletedAt": null,
+  "options": [],
+  "variants": []
+}
+```
+
+#### 2. Add Variants to Product
+
+```http
+POST /api/products/:id/variants
+Authorization: Bearer {token}
+Content-Type: application/json
+```
+
+**Request Body:**
+```json
+[
+  {
+    "sku": "WO425",
+    "name": "Chunk Nibbles - 4.25 oz, Vanilla (Original)",
+    "description": "Our Vanilla (Original) flavor...",
+    "priceRetail": 5.49,
+    "options": {
+      "Flavor": "Vanilla (Original)",
+      "Size": "4.25 oz"
+    },
+    "eachCount": 12,
+    "eachSize": 4.25,
+    "eachSizeUnit": "oz",
+    "eachName": "pouch",
+    "eachNamePlural": "pouches",
+    "availability": "inStock",
+    "position": 0
+  },
+  {
+    "sku": "WO2",
+    "name": "Chunk Nibbles - 2 oz, Vanilla (Original)",
+    "priceRetail": 3.49,
+    "options": {
+      "Flavor": "Vanilla (Original)",
+      "Size": "2 oz"
+    },
+    "availability": "inStock",
+    "position": 1
+  }
+]
+```
+
+**Response:** `201 Created`
+
+Returns the updated product with auto-managed options and all variants.
+
+**Auto-Option Management:**
+The API automatically extracts options from variants:
+- Collects unique option names (e.g., "Flavor", "Size")
+- Collects unique values for each option
+- Creates/updates ProductOption entities
+- Sorts values alphabetically
+
+#### 3. List Products
+
+```http
+GET /api/products?status=available&sellerId=2830&page=1&limit=20
+Authorization: Bearer {token}
+```
+
+**Query Parameters:**
+- `status` (optional): Filter by status (available, draft, archived)
+- `sellerId` (optional): Filter by seller ID
+- `page` (optional): Page number (default: 1)
+- `limit` (optional): Items per page (default: 20, max: 100)
+
+**Response:** `200 OK`
+```json
+{
+  "data": [...],
+  "total": 100,
+  "page": 1,
+  "limit": 20,
+  "totalPages": 5
+}
+```
+
+#### 4. Get Single Product
+
+```http
+GET /api/products/:id
+Authorization: Bearer {token}
+```
+
+**Response:** `200 OK`
+
+Returns product with all options and variants.
+
+### Error Responses
+
+```json
+// 400 Bad Request
+{
+  "statusCode": 400,
+  "message": ["name must be longer than or equal to 3 characters"],
+  "error": "Bad Request"
+}
+
+// 401 Unauthorized
+{
+  "statusCode": 401,
+  "message": "Invalid token",
+  "error": "Unauthorized"
+}
+
+// 404 Not Found
+{
+  "statusCode": 404,
+  "message": "Product with ID 123 not found",
+  "error": "Not Found"
+}
+
+// 409 Conflict
+{
+  "statusCode": 409,
+  "message": "SKU 'WO425' already exists",
+  "error": "Conflict"
+}
+```
+
+## Architecture
+
+### Folder Structure
+
+```
+src/
+├── shared/                    # Framework-agnostic (future UI ready)
+│   ├── config/               # Environment + DB config
+│   ├── enums/                # ProductStatus, Availability
+│   ├── interfaces/           # IProduct, IProductOption, IProductVariant
+│   ├── dtos/                 # PaginatedResponseDto
+│   ├── guards/               # AuthGuard
+│   └── decorators/           # @Public()
+├── products/                  # Products module
+│   ├── entities/             # TypeORM entities (implement interfaces)
+│   ├── dtos/                 # Request/response DTOs
+│   ├── products.module.ts
+│   ├── products.service.ts   # Business logic (~280 lines)
+│   └── products.controller.ts # REST API endpoints
+└── database/
+    ├── migrations/           # Version-controlled schema changes
+    └── data-source.ts        # TypeORM CLI configuration
+```
+
+### Key Design Decisions
+
+1. **Monorepo-Ready:** Interfaces in `src/shared/` for future UI integration
+2. **Transaction Safety:** Pessimistic locking prevents race conditions
+3. **Update/Merge Strategy:** Reuses option IDs instead of delete/recreate (no ghost IDs)
+4. **Internationalization:** Slug normalization handles accented characters (ç→c, á→a)
+5. **Type Safety:** Entities implement interfaces throughout
+
+## Testing
+
+```bash
+# Unit tests
+pnpm test
+
+# E2E tests
+pnpm test:e2e
+
+# Test coverage
+pnpm test:cov
 ```
 
 ## Deployment
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+The application is ready for deployment to:
+- **Vercel** (recommended for NestJS)
+- **AWS** (EC2, ECS, Lambda)
+- **Docker** (containerized deployment)
+- **Any Node.js hosting**
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+### Vercel Deployment
 
-```bash
-$ pnpm install -g mau
-$ mau deploy
-```
+1. Create `vercel.json` (if not exists)
+2. Set environment variables in Vercel dashboard
+3. Deploy: `vercel --prod`
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## Documentation
 
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+- **Swagger UI:** Available at `/api/docs` in development and test environments
+- **Implementation Plan:** See `plans/implementation-plan.md`
+- **Development Decisions:** See `plans/development-decisions.md`
 
 ## License
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+This project is [MIT licensed](LICENSE).
