@@ -331,17 +331,50 @@ pnpm test:cov
 
 ## Deployment
 
-The application is ready for deployment to:
-- **Vercel** (recommended for NestJS)
-- **AWS** (EC2, ECS, Lambda)
-- **Docker** (containerized deployment)
-- **Any Node.js hosting**
+### GitHub Actions + Vercel (Recommended) ✅
 
-### Vercel Deployment
+This project uses **GitHub Actions** for automated deployments with the following benefits:
 
-1. Create `vercel.json` (if not exists)
-2. Set environment variables in Vercel dashboard
-3. Deploy: `vercel --prod`
+- ✅ **Automatic migrations** - Runs database migrations before each deployment
+- ✅ **Custom .env handling** - Creates `.env.production` in `src/shared/config/`
+- ✅ **Full CI/CD pipeline** - Build, test, migrate, deploy
+- ✅ **Zero-downtime deployments** - Automatic on push to main
+
+**Quick Setup:**
+
+1. **Set GitHub Secrets** (in repository Settings → Secrets):
+   ```
+   VERCEL_TOKEN          # Get from vercel.com/account/tokens
+   VERCEL_ORG_ID         # From .vercel/project.json
+   VERCEL_PROJECT_ID     # From .vercel/project.json
+   DB_HOST               # Neon database host
+   DB_PASSWORD           # Neon database password
+   DB_NAME               # mable_products (production)
+   AUTH_BEARER_TOKEN     # Your production token
+   ```
+
+2. **Push to main branch:**
+   ```bash
+   git push origin main
+   ```
+
+3. **Monitor deployment** in GitHub Actions tab
+
+**Detailed Instructions:** See [GITHUB_ACTIONS_SETUP.md](GITHUB_ACTIONS_SETUP.md)
+
+---
+
+### Alternative: Vercel Dashboard (Simple)
+
+For quick testing without CI/CD:
+
+1. Import repository in [Vercel Dashboard](https://vercel.com)
+2. Set environment variables
+3. Deploy manually
+
+**Note:** You'll need to run migrations manually with this approach.
+
+**See:** [DEPLOYMENT.md](DEPLOYMENT.md) for Vercel Dashboard setup.
 
 ## Documentation
 

@@ -37,10 +37,10 @@ lerna-debug.log*
 
 # dotenv environment variable files
 .env
-.env.development.local
-.env.test.local
-.env.production.local
-.env.local
+.env.development
+.env.test
+.env.production
+.env
 
 # Environment files in src/shared/config (NEVER commit these - contain credentials)
 src/shared/config/.env.development
@@ -69,3 +69,7 @@ report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
 /*.md
 /*.json
 plans/
+.vercel
+
+# Keep vercel file
+!vercel.json

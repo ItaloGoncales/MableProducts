@@ -1,0 +1,37 @@
+# Environment files (use Vercel dashboard for env vars)
+src/shared/config/.env.*
+!src/shared/config/.env.example
+
+# Development files
+node_modules
+.git
+.gitignore
+
+# Test files
+test
+coverage
+*.spec.ts
+*.e2e-spec.ts
+
+# Documentation
+plans
+*.md
+!README.md
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS
+.DS_Store
+Thumbs.db
