@@ -42,6 +42,16 @@ lerna-debug.log*
 .env.production.local
 .env.local
 
+# Environment files in src/shared/config (NEVER commit these - contain credentials)
+src/shared/config/.env.development
+src/shared/config/.env.test
+src/shared/config/.env.prod
+src/shared/config/.env.local
+src/shared/config/.env.*.local
+
+# Keep example file for documentation
+!src/shared/config/.env.example
+
 # temp directory
 .temp
 .tmp
@@ -54,3 +64,8 @@ pids
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Development files
+/*.md
+/*.json
+plans/
