@@ -1,13 +1,16 @@
 import { Logger, Module, OnApplicationShutdown, OnModuleDestroy } from '@nestjs/common'
 import { ConfigModule, ConfigService } from '@nestjs/config'
 import { TypeOrmModule } from '@nestjs/typeorm'
+import { APP_GUARD } from '@nestjs/core'
 import { AppController } from './app.controller'
 import { AppService } from './app.service'
+import { AuthGuard } from './shared/guards/auth.guard'
 
 // Config imports
+import appConfig from './shared/config/app.config'
 import databaseConfig from './shared/config/database.config'
 
-const configs = [databaseConfig]
+const configs = [appConfig, databaseConfig]
 
 const env = process.env.NODE_ENV || 'development'
 
@@ -25,7 +28,13 @@ const env = process.env.NODE_ENV || 'development'
     }),
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_GUARD,
+      useClass: AuthGuard,
+    },
+  ],
 })
 export class AppModule implements OnApplicationShutdown, OnModuleDestroy {
   private readonly log = new Logger(AppModule.name)
