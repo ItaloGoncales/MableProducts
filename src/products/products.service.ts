@@ -16,30 +16,13 @@ export class ProductsService {
   constructor(
     @InjectRepository(Product)
     private productRepository: Repository<Product>,
-    @InjectRepository(ProductOption)
-    private productOptionRepository: Repository<ProductOption>,
-    @InjectRepository(ProductVariant)
-    private productVariantRepository: Repository<ProductVariant>,
     private dataSource: DataSource,
   ) {}
 
   /**
-   * Generate URL-friendly slug from product name
-   * Normalizes accented characters (ç→c, á→a, etc.) before processing
-   * Ensures uniqueness by appending number if needed
+   * Ensure a slug is unique by appending a number if needed
    */
-  private async generateSlug(name: string, productId?: number): Promise<string> {
-    let slug = name
-      .toLowerCase()
-      .trim()
-      .normalize('NFD') // Decompose accented characters
-      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics (accents)
-      .replace(/[^\w\s-]/g, '') // Remove special characters
-      .replace(/\s+/g, '-') // Replace spaces with hyphens
-      .replace(/-+/g, '-') // Replace multiple hyphens with single
-      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
-
-    // Check if slug exists
+  private async ensureUniqueSlug(slug: string): Promise<string> {
     let counter = 1
     let uniqueSlug = slug
     let exists = true
@@ -49,7 +32,7 @@ export class ProductsService {
         where: { slug: uniqueSlug },
       })
 
-      if (!existing || existing.id === productId) {
+      if (!existing) {
         exists = false
       } else {
         uniqueSlug = `${slug}-${counter}`
@@ -61,14 +44,33 @@ export class ProductsService {
   }
 
   /**
+   * Generate URL-friendly slug from product name
+   * Normalizes accented characters (ç→c, á→a, etc.) before processing
+   * Ensures uniqueness by appending number if needed
+   */
+  private async generateSlug(name: string): Promise<string> {
+    const slug = name
+      .toLowerCase()
+      .trim()
+      .normalize('NFD') // Decompose accented characters
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics (accents)
+      .replace(/[^\w\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with hyphens
+      .replace(/-+/g, '-') // Replace multiple hyphens with single
+      .replace(/^-+|-+$/g, '') // Remove leading/trailing hyphens
+
+    return this.ensureUniqueSlug(slug)
+  }
+
+  /**
    * Create a new product (without variants initially)
    * Variants should be added separately via addVariants()
    */
   async createProduct(createProductDto: CreateProductDto): Promise<Product> {
     const { name, slug, status, sellerId } = createProductDto
 
-    // Generate slug if not provided
-    const finalSlug = slug || (await this.generateSlug(name))
+    // Generate slug if not provided, or validate custom slug for uniqueness
+    let finalSlug = slug ? await this.ensureUniqueSlug(slug) : await this.generateSlug(name)
 
     // Create product
     const product = this.productRepository.create({
@@ -89,7 +91,7 @@ export class ProductsService {
   async addVariants(productId: number, createVariantDtos: CreateVariantDto[]): Promise<Product> {
     // Use transaction to ensure data consistency
     return await this.dataSource.transaction(async (manager) => {
-      // Check if product exists with pessimistic lock (without relations to avoid LEFT JOIN issue)
+      // Check if product exists with pessimistic lock
       const product = await manager
         .createQueryBuilder(Product, 'product')
         .where('product.id = :id', { id: productId })
@@ -99,17 +101,6 @@ export class ProductsService {
       if (!product) {
         throw new NotFoundException(`Product with ID ${productId} not found`)
       }
-
-      // Load relations separately (after acquiring lock)
-      const existingOptions = await manager.find(ProductOption, {
-        where: { productId },
-      })
-      const existingVariants = await manager.find(ProductVariant, {
-        where: { productId },
-      })
-
-      product.options = existingOptions
-      product.variants = existingVariants
 
       // Validate and create variants
       const newVariants: ProductVariant[] = []
@@ -170,20 +161,11 @@ export class ProductsService {
       // Auto-manage options based on all variants (within transaction)
       await this.autoManageOptionsInTransaction(manager, productId)
 
-      // Return updated product with relations (load separately to avoid lock issues)
-      const updatedProduct = await manager.findOne(Product, {
+      // Return updated product with relations
+      return await manager.findOne(Product, {
         where: { id: productId },
+        relations: ['options', 'variants'],
       })
-
-      // Load relations separately
-      updatedProduct.options = await manager.find(ProductOption, {
-        where: { productId },
-      })
-      updatedProduct.variants = await manager.find(ProductVariant, {
-        where: { productId },
-      })
-
-      return updatedProduct
     })
   }
 
@@ -270,8 +252,13 @@ export class ProductsService {
     const queryBuilder = this.productRepository
       .createQueryBuilder('product')
       .leftJoinAndSelect('product.options', 'options')
-      .leftJoinAndSelect('product.variants', 'variants')
       .where('product.deletedAt IS NULL') // Exclude soft-deleted products
+
+    if (filterDto.detailed) {
+      // TODO: Maybe returning the variants makes the response too big.
+      // Consider removing it in the future
+      queryBuilder.leftJoinAndSelect('product.variants', 'variants')
+    }
 
     // Apply filters
     if (status) {

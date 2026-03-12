@@ -1,4 +1,4 @@
-import { IsEnum, IsOptional, IsInt, Min, Max } from 'class-validator'
+import { IsEnum, IsOptional, IsInt, Min, Max, IsBoolean } from 'class-validator'
 import { Type } from 'class-transformer'
 import { ApiPropertyOptional } from '@nestjs/swagger'
 import { ProductStatus } from '../../shared/enums'
@@ -46,4 +46,14 @@ export class FilterProductsDto {
   @Max(100)
   @Type(() => Number)
   limit?: number = 20
+
+  @ApiPropertyOptional({
+    description: 'Detailed view',
+    example: false,
+    default: false,
+  })
+  @IsOptional()
+  @IsBoolean()
+  @Type(() => Boolean)
+  detailed?: boolean = false
 }
